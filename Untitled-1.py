@@ -179,4 +179,4 @@ while True:
             case 2:
                 pass
 
-    input()
+    input() #wala lang to, i run using cmd, nilagyan ko lang para di magclose agad ung cmd
