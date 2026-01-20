@@ -146,19 +146,21 @@ while True:
                                     if not char.isdigit():
                                         invalid_found = True
                                         break
-                                if invalid_found == True:
-                                    break
+                                if invalid_found:
+                                    brea
+                            
 
-                            if invalid_found == False: #if no invalid has been found, add the seats in the list now
+                            if not invalid_found and len(chosen_seat.split(",")) == len(set(chosen_seat.split(","))): #set() returns a collection with removed duplicates. if the original has no duplicats, then it should match the length of the set()
                                 booked_seats = [int(seat) for seat in chosen_seat.split(",")]
-
                                 if booked_seats == [0]: #if the list ONLY contains a 0, break the loop, which returns to the previous menu
                                     break
 
                                 for seat in booked_seats: #self explanatory, booked seats should only be in the range from 1 to whatever max number of seats is
                                     if seat > max_seats or seat < 1:
                                         invalid_found = True
-
+                            else:
+                                invalid_found = True
+                            
                             if invalid_found: #restart loop if invalid was found
                                 print("Invalid boi")
                                 time.sleep(1)
