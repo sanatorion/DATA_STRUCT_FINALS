@@ -30,6 +30,7 @@ def confirm_order():
     }
     for seat in booked_seats:
         cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"][seat-1] = 'X' #replace booked seat by the character X
+    print("Ticket Booked! We look forward to seeing you!")
 
 def display_seats(room_num, time_id):
     movie_and_time = cinema_info[room_num]["Showtimes"][time_id]["Seats"]
@@ -79,7 +80,16 @@ cinema_info = {
             2: {"Time": "8:00", "Seats": list(range(1, (max_seats+1)))},
             3: {"Time": "9:00", "Seats": list(range(1, (max_seats+1)))}
         }
-    }    
+    },
+    4: { #Room 3
+        "Title": "Movie 4",
+        "Price": 450,
+        "Showtimes": {
+            1: {"Time": "10:00", "Seats": list(range(1, (max_seats+1)))},
+            2: {"Time": "11:00", "Seats": list(range(1, (max_seats+1)))},
+            3: {"Time": "12:00", "Seats": list(range(1, (max_seats+1)))}
+        }
+    }       
 }
 
 while True:
@@ -141,26 +151,32 @@ while True:
                                 if seat == "": #if its empty, thats invalid
                                     invalid_found = True
                                     break
-
                                 for char in seat: #now check every character if its a digit
                                     if not char.isdigit():
                                         invalid_found = True
                                         break
                                 if invalid_found:
-                                    brea
+                                    break
                             
-
+                            seat_available = True
                             if not invalid_found and len(chosen_seat.split(",")) == len(set(chosen_seat.split(","))): #set() returns a collection with removed duplicates. if the original has no duplicats, then it should match the length of the set()
                                 booked_seats = [int(seat) for seat in chosen_seat.split(",")]
                                 if booked_seats == [0]: #if the list ONLY contains a 0, break the loop, which returns to the previous menu
+                                    print(booked_seats[0]); time.sleep(3)
                                     break
 
                                 for seat in booked_seats: #self explanatory, booked seats should only be in the range from 1 to whatever max number of seats is
                                     if seat > max_seats or seat < 1:
                                         invalid_found = True
+                                    elif seat not in cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"]: #check if seat is still in the seat list
+                                        seat_available = False
                             else:
                                 invalid_found = True
                             
+                            if not seat_available:
+                                print("Seat already taken!")
+                                time.sleep(1)
+                                continue
                             if invalid_found: #restart loop if invalid was found
                                 print("Invalid boi")
                                 time.sleep(1)
@@ -176,8 +192,12 @@ while True:
                                     print(f"{seat}")
                             total_price = cinema_info[chosen_room]["Price"] * len(booked_seats)
                             print(f"--------------- \nPrice: {total_price}")
-                            input("> Enter Y to Confirm: ")
-                            confirm_order()
+                            confirmation = input("> Enter Y to Confirm: ")
+                            if confirmation.capitalize() == "Y":
+                                confirm_order()
+                            else:
+                                print("Order cancelled.")
+                            time.sleep(2)
             case 2:
                 pass
 
