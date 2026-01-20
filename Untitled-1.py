@@ -29,7 +29,7 @@ def confirm_order():
         "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     for seat in booked_seats:
-        cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"][seat-1] = 'X'
+        cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"][seat-1] = 'X' #replace booked seat by the character X
 
 def display_seats(room_num, time_id):
     movie_and_time = cinema_info[room_num]["Showtimes"][time_id]["Seats"]
@@ -37,7 +37,7 @@ def display_seats(room_num, time_id):
     print("│                      SCREEN                      │")
     print("└──────────────────────────────────────────────────┘\n\n")
 
-    for i, seat in enumerate(movie_and_time, start=1):
+    for i, seat in enumerate(movie_and_time, start=1): #nag enumerate ako para maayos ung seats by index, instead of the actual values. kasi nga narereplace sila by letter X if booked
         print(f"{seat:>2}  ", end=" ")
         if i % 5 == 0: #add space per 5 seats
             print ("    ", end=" ")
@@ -84,7 +84,7 @@ cinema_info = {
 
 while True:
     os.system('cls')
-    #print orders for debugging
+    #print all orders for debugging
     for key, val in orders.items():
         print(f"{key}: {val}")
     print()
