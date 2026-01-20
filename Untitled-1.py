@@ -18,20 +18,20 @@ def generate_TID():
         if tid not in orders:
             return tid
 
-def confirm_order(chosen_room, chosen_time, chosen_seat):
+def confirm_order():
     tid = generate_TID()
     orders[tid] = {
-        "Title:": cinema[chosen_room]["Title"],
+        "Title:": cinema_info[chosen_room]["Title"],
         "Room Number": chosen_room,
-        "Schedule": cinema[chosen_room]["Showtimes"][chosen_time]["Time"],
+        "Schedule": cinema_info[chosen_room]["Showtimes"][chosen_time]["Time"],
         "Seat": chosen_seat,
-        "Price:": cinema[chosen_room]["Price"],
+        "Price:": cinema_info[chosen_room]["Price"],
         "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    cinema[chosen_room]["Showtimes"][chosen_time]["Seats"][chosen_seat-1] = 'X'
+    cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"][chosen_seat-1] = 'X'
 
 def display_seats(room_num, time_id):
-    movie_and_time = cinema[room_num]["Showtimes"][time_id]["Seats"]
+    movie_and_time = cinema_info[room_num]["Showtimes"][time_id]["Seats"]
     print("┌──────────────────────────────────────────────────┐")
     print("│                      SCREEN                      │")
     print("└──────────────────────────────────────────────────┘\n\n")
@@ -51,7 +51,7 @@ def print_all_info(dict, info_to_print):
 
 #main----------------------------------------------------------------------
 max_seats = 50
-cinema = {
+cinema_info = {
     1: {
         "Title": "Movie 1",
         "Price": 150,
@@ -89,40 +89,62 @@ while True:
     print()
 
     print("WELCOME TO MOVIE TICKET RESERVATION SYSTEM")
-    print("1. Book Movie Ticket \n2. Manage Orders")
+    print("(Enter 0 anytime to return to the previous menu)")
+    print("\n1. Book Movie Ticket \n2. Manage Orders")
 
     user_input = tryparse(input("> "))
 
-    if user_input is None:
+    if user_input is None or user_input > 2:
         print("Invalid boi")
         time.sleep(1)
-        os.system('cls')
+        continue
     else:
         match(user_input):
             case 1:
-                os.system('cls')
-                print("Choose Rooms: (or movie idk man)")
-                print_all_info(cinema, "Title")
-                chosen_room = tryparse(input("> "))
+                while True:
+                    os.system('cls')
+                    print("Rooms:")
+                    print_all_info(cinema_info, "Title")
+                    chosen_room = tryparse(input("> "))
 
-                #add error handling here
-                os.system('cls')
-                print("Choose a time:")
-                n = 0
-                print_all_info(cinema[chosen_room]["Showtimes"], "Time")
-                chosen_time = tryparse(input("> "))
-                os.system('cls')
+                    if chosen_room is None or chosen_room > len(cinema_info) or chosen_room < 0:
+                        print("Invalid boi")
+                        time.sleep(1)
+                        continue
+                    if chosen_room == 0:
+                        break
+                    
+                    while True:
+                        os.system('cls')
+                        print(f"Room {chosen_room}: {cinema_info[chosen_room]['Title']} > Time:")
+                        print_all_info(cinema_info[chosen_room]["Showtimes"], "Time")
+                        chosen_time = tryparse(input("> "))
+                        
+                        if chosen_time is None or chosen_time > len(cinema_info[chosen_room]["Showtimes"]) or chosen_time < 0:
+                            print("Invalid boi")
+                            time.sleep(1)
+                            continue
+                        if chosen_time == 0:
+                            break
 
-                display_seats(chosen_room, chosen_time)
-                print("\n")
-                chosen_seat = tryparse(input("> Choose a seat: "))
-                #add error handling here
-                os.system('cls')
+                        while True:
+                            os.system('cls')
+                            print(f"Room {chosen_room}: {cinema_info[chosen_room]['Title']} > Time: {cinema_info[chosen_room]['Showtimes'][chosen_time]['Time']}")
+                            display_seats(chosen_room, chosen_time)
+                            print()
+                            chosen_seat = tryparse(input("> Choose a seat: "))
+                            
+                            if chosen_seat is None or chosen_seat > max_seats or chosen_seat < 0:
+                                print("Invalid boi")
+                                time.sleep(1)
+                                continue
+                            if chosen_seat == 0:
+                                break
 
-                print("Confirm Order: \n---------------")
-                print(f"Title: {cinema[chosen_room]['Title']} \nRoom: {chosen_room} \nSchedule: {cinema[chosen_room]['Showtimes'][chosen_time]['Time']} \nSeat: {chosen_seat} \n---------------\nPrice:{cinema[chosen_room]['Price']}\n")
-                input("> Enter Y to Confirm: ")
-                confirm_order(chosen_room, chosen_time, chosen_seat)
+                            print("\nConfirm Order: \n---------------")
+                            print(f"Title: {cinema_info[chosen_room]['Title']} \nRoom: {chosen_room} \nSchedule: {cinema_info[chosen_room]['Showtimes'][chosen_time]['Time']} \nSeat: {chosen_seat} \n---------------\nPrice:{cinema_info[chosen_room]['Price']}\n")
+                            input("> Enter Y to Confirm: ")
+                            confirm_order()
             case 2:
                 pass
 
