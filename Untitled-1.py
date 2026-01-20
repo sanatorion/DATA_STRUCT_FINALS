@@ -81,7 +81,7 @@ cinema_info = {
             3: {"Time": "9:00", "Seats": list(range(1, (max_seats+1)))}
         }
     },
-    4: { #Room 3
+    4: { #Room 4
         "Title": "Movie 4",
         "Price": 450,
         "Showtimes": {
