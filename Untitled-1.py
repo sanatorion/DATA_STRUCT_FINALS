@@ -44,7 +44,7 @@ def display_seats(room_num, time_id):
         if i % 10 == 0: #newline per 10 seats
             print()
 
-def print_all_info(dict, info_to_print): #this just prints whatever info needed in na list by numbers
+def print_all_info(dict, info_to_print): #this just prints whatever info needed in a list by numbers
     n = 0
     for _, info in dict.items():
         n += 1
