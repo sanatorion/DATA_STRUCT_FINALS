@@ -178,7 +178,7 @@ while True:
 
     print("WELCOME TO MOVIE TICKET RESERVATION SYSTEM")
     print("(Enter 0 anytime to return to the previous menu)")
-    print("\n1. Book Movie Ticket \n2. Manage Orders \n3. Exit")
+    print("\n1. Book Movie Ticket \n2. Manage Orders(Wala pa) \n3. Exit")
 
     user_input = tryparse(input("> "))
     if user_input is None or user_input > 3:
@@ -191,7 +191,7 @@ while True:
                 room_num = 0
                 time_id = 0
                 exit = False
-                current_menu_id = 1 #this menu id is used to determine which panel is to show, each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
+                current_menu_id = 1 #this menu id is used to determine which panel to show, each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
                 while not exit:
                     match(current_menu_id):
                         case 1: room_num = select_room_panel(room_num)
