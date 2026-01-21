@@ -5,7 +5,6 @@ import random
 from debug import DebugTools
 
 current_menu_id = 1 #this menu id is used to determine which panel to show, each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
-
 max_seats = 50 
 orders = {} #ORDER INFO: ORDER ID, MOVIE TITLE, ROOM NUMBER, SCHEDULE, SEAT, PRICE, TIME
 cinema_info = {}
@@ -85,7 +84,7 @@ def select_schedule_panel(chosen_room, tid):
      while True: 
         os.system('cls')
         if tid:
-            print(f"Order ID: {tid} | Room {orders[tid]['Room Number']} | Schedule: {orders[tid]['Schedule']} | Seat(s): {orders[tid]['Seat(s)']}  | Price: {orders[tid]['Price']}")
+            print(f"Order ID: {tid} | Room {orders[tid]['Room Number']} | Schedule: {orders[tid]['Schedule']} | Seat(s): {orders[tid]['Seat(s)']} | Price: {orders[tid]['Price']}")
         print(f"Room {chosen_room}: {cinema_info[chosen_room]['Title']} > Time:")
         print_all_info(cinema_info[chosen_room]["Showtimes"], "Time")
         chosen_time = tryparse(input("> "))
@@ -150,11 +149,16 @@ def are_seats_unavailable(seats, chosen_room, chosen_time, tid):
     global flag_for_multiple_zeros
     if tid:
         for seat in seats:
+            if seat < 1:
+                flag_for_multiple_zeros = True
+                print("Invalid boi")
+                time.sleep(1)
+                return False
             if seat not in orders[tid]['Seat(s)'] and seat not in cinema_info[chosen_room]['Showtimes'][chosen_time]['Seats']:
                 return True
     else:
         for seat in seats:
-            if seat < 1: #if seat num input is 0000000, python automatically converts it to a single 0 kaya if less than 1, then flag it
+            if seat < 1:
                 flag_for_multiple_zeros = True
                 print("Invalid boi")
                 time.sleep(1)
@@ -202,7 +206,7 @@ def manage_orders_panel():
     global exit
     while True:
         os.system('cls')
-        print("1. Search Order\n2. Update Order \n3. Cancel Order\n4. View All Orders")
+        print("What would you like to do?\n1. Search Order\n2. Update Order \n3. Cancel Order\n4. View All Orders")
         manage_choice = tryparse(input("> "))
         if manage_choice == 0: exit = True; return
         elif manage_choice is None or manage_choice > 4 or manage_choice < 1:
@@ -238,6 +242,7 @@ def search_order_panel():
 def update_order_panel():
     global current_menu_id, exit
     while True:
+        exit = False
         os.system('cls')
         if not orders:
             print("No orders found.")
@@ -252,7 +257,7 @@ def update_order_panel():
             continue
         else:
             new_room = 0; new_time = 0
-            exit = False; current_menu_id = 1
+            current_menu_id = 1
             while not exit:
                 os.system('cls')
                 match(current_menu_id):
