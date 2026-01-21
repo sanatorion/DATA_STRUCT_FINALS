@@ -368,14 +368,10 @@ while True:
                 while not exit:
                     choice = manage_orders_panel()
                     match(choice):
-                        case 1:
-                            search_order_panel()
-                        case 2:
-                            update_order_panel()
-                        case 3:
-                            cancel_order_panel()
-                        case 4:
-                            view_all_orders_panel()
+                        case 1: search_order_panel()
+                        case 2: update_order_panel()
+                        case 3: cancel_order_panel()
+                        case 4: view_all_orders_panel()
             case 3:
                 break
 input() #wala lang to, i run using cmd, nilagyan ko lang para di magclose agad ung cmd
