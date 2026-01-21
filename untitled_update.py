@@ -4,10 +4,28 @@ from datetime import datetime
 import random
 from debug import DebugTools
 
-current_menu_id = 1 #this menu id is used to determine which panel to show, each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
-max_seats = 50 
+# Movie Ticket Reservation System - Code Structure Overview:
+# 
+# Data Structures:
+# - cinema_info: Dict of rooms (room_num -> {'Title': str, 'Price': int, 'Showtimes': {time_id: {'Time': str, 'Seats': list}}})
+# - orders: Dict of TIDs (transaction IDs) to order details ({'Title', 'Room Number', 'Schedule', 'Seat(s)', 'Price', 'Time'})
+# - max_seats: Int constant for max seats per showtime (default 50)
+
+# Key Functions:
+# - Selection Panels: select_room_panel, select_schedule_panel, select_seats_panel (handle input/validation for booking)
+# - Management Panels: search_order_panel, update_order_panel, cancel_order_panel, view_all_orders_panel (CRUD for orders)
+# - Utilities: mark_seats (update seat status), generate_TID (unique ID), confirm_order (finalize booking), display functions
+
+# Globals:
+# - current_menu_id: Int for menu navigation (1=room selection panel, 2=time selection panel, 3=seats selection panel)
+# - exit: Bool to break out of panel loops
+
+# Program Flow: Main while loop displays menu options; booking traverses selection panels (room -> time -> seats) sequentially using current_menu_id; management enters sub-menus for order operations (search, update, cancel, view with sorting/reversing).
+
+current_menu_id = 1 #used to simulate menu traversal. each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
+max_seats = 50 #total number of seats
 orders = {} #ORDER INFO: ORDER ID, MOVIE TITLE, ROOM NUMBER, SCHEDULE, SEAT, PRICE, TIME
-cinema_info = {}
+cinema_info = {} #stores cinema data here
 
 def tryparse(value):
     try:
@@ -21,17 +39,17 @@ def generate_TID():
         if tid not in orders:
             return tid
 
-def mark_seats(marker, room_num, time, seats_to_mark_from, convert_time, use_marker):
-    if convert_time:
+def mark_seats(marker, room_num, time, seats_to_mark_from, convert_time, use_marker): #seat marker
+    if convert_time: #matches proper time id of schedules of existing orders. This is used if updating existing order
         showtimes = cinema_info[room_num]["Showtimes"]
         for key, val in showtimes.items():
             if val["Time"] == time:
                 time = key
                 break
     for seat in seats_to_mark_from:
-        cinema_info[room_num]["Showtimes"][time]["Seats"][seat-1] = marker if use_marker else seat
+        cinema_info[room_num]["Showtimes"][time]["Seats"][seat-1] = marker if use_marker else seat #mark seats as marker, else just use seat number. seat number is used to revert booked seats
 
-def modify_cinema_room(room_num, movie_name, price, time1, time2, time3): #add or edit any movie details using this function
+def modify_cinema_room(room_num, movie_name, price, time1, time2, time3): #add or edit any cinema details using this function
     cinema_info[room_num] = { 
         "Title": movie_name,
         "Price": price,
@@ -42,13 +60,13 @@ def modify_cinema_room(room_num, movie_name, price, time1, time2, time3): #add o
         }
     }
 
-def display_seats(room_num, time_id):
+def display_seats(room_num, time_id): #displays seats
     movie_and_time = cinema_info[room_num]["Showtimes"][time_id]["Seats"]
     print("┌──────────────────────────────────────────────────┐")
     print("│                      SCREEN                      │")
     print("└──────────────────────────────────────────────────┘\n\n")
 
-    for i, seat in enumerate(movie_and_time, start=1): #nag enumerate ako para maayos ung seats by index, instead of the actual values. kasi nga narereplace sila by letter X if booked
+    for i, seat in enumerate(movie_and_time, start=1): #nag enumerate ako para maayos ung display ng seats by index, instead of the actual values. kasi they can get replaced when booked
         print(f"{seat:>2}  ", end=" ")
         if i % 5 == 0: #add space per 5 seats
             print ("    ", end=" ")
@@ -63,7 +81,7 @@ def print_all_info(dict, info_to_print): #this just prints whatever info needed 
 
 #-----------------------------------------------------------------------------------
 def select_room_panel(tid):
-    global current_menu_id, exit #current_menu_id, nasa Main ito, this is used para makapag traverse ung menu smoothly by detecting anong menu dapat ung lalabas currently
+    global current_menu_id, exit
     while True:
         os.system('cls')
         if tid:
@@ -76,8 +94,8 @@ def select_room_panel(tid):
             print("Invalid boi")
             time.sleep(1)
             continue
-        elif chosen_room == 0: exit = True; return #edits the exit boolean variable that allows the menu traversal to work. used in a while loop sa Main
-        else: current_menu_id += 1; return chosen_room #increment menu id to go to the next  menu
+        elif chosen_room == 0: exit = True; return #edits the exit boolean variable that also allows the menu traversal to work. used in a while loop sa Main
+        else: current_menu_id += 1; return chosen_room #increment menu id to go to the next menu
         
 def select_schedule_panel(chosen_room, tid):
      global current_menu_id
@@ -96,11 +114,11 @@ def select_schedule_panel(chosen_room, tid):
         elif chosen_time == 0: current_menu_id -= 1; break #decrement menu id to go back to previous menu
         else: current_menu_id += 1; return chosen_time #increment menu id to go to the next  menu
 
-flag_for_multiple_zeros = False #just a lazy checker for 00000 inputs, its main condition is in "are_seats_unavailable() (line 151)"" tignan mo comment sa line 104
-def select_seats_panel(chosen_room, chosen_time, tid):
+flag_for_multiple_zeros = False #just a lazy checker for multiple zero inputs (e.g. 0000000), its main condition is in are_seats_unavailable() (line 148). Read comment on line 114 for further info
+def select_seats_panel(chosen_room, chosen_time, tid): # tid parameter is used to indicate if updating an existing order (tid is the order ID) or creating a new booking (tid is None)
     global current_menu_id, flag_for_multiple_zeros
     if tid:
-        mark_seats("[]", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, True)
+        mark_seats("[]", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, True) # mark booked seats of currently accesed order with "[]"
     while True:
         os.system('cls')
         if tid:
@@ -109,12 +127,12 @@ def select_seats_panel(chosen_room, chosen_time, tid):
         display_seats(chosen_room, chosen_time)
         print()
         flag_for_multiple_zeros = False
-        chosen_seat = input("> Choose seat(s) (separated by comma): ") #allow booking multiple seats per order, separated by comma
+        chosen_seat = input("> Choose seat(s) (separated by comma): ") # allow booking multiple seats per order, separated by comma
 
-        if chosen_seat == "0": #ito kasi di naman nadedetect mga 00000 input since comparing to string lang, pero by default python converts multiple zeros to single 0 lang rin pero di ko inallow mag ganon cause of a few input issues
+        if chosen_seat == "0":# comparing to string "0" prevents detecting multiple zeros (e.g., "00000") as back input, but Python auto-converts them to single 0 anyway, so it's fine. However, we disallow it due to inputs starting with 0 (e.g., "01") which is weird
             current_menu_id -= 1 #decrement menu id to go back to previous menu
             if tid:
-                mark_seats("X", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, True)
+                mark_seats("X", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, True) #revert "[]" marked seats to "X"
             break
         elif are_input_seat_invalid(chosen_seat):
             print("Invalid boi")
@@ -128,24 +146,24 @@ def select_seats_panel(chosen_room, chosen_time, tid):
                 continue
             
         if flag_for_multiple_zeros: continue
-        complete_order(chosen_room, chosen_time, booked_seats, tid if tid else None, "[]" if tid else "X")
+        complete_order(chosen_room, chosen_time, booked_seats, tid if tid else None, "[]" if tid else "X") # This function calls confirm_order(), which calls mark_seats() with different markers: "[]" for updates (when tid exists) or "X" for new bookings (when tid is None)
 
 def are_input_seat_invalid(chosen_seat):
-    seats = chosen_seat.split(",") #since we allow booking multiple seats per order, seats is a string muna and yeah split it by comma
+    seats = chosen_seat.split(",") # since we allow booking multiple seats per order, seats is a string and is split by comma
     for seat in seats:
         if seat == "": 
             return True
         for char in seat:
-            if not char.isdigit():  #check each character in the current seat string if digit sya
+            if not char.isdigit():  # check each character in the current seat string if its a digit
                 return True
-        if int(seat) > max_seats or int(seat) < 0:  #make sure seat is actually in the range of seat numbers
+        if int(seat) > max_seats or int(seat) < 0: # make sure seat is actually in the range of seat numbers
             return True
         
-    if len(seats) != len(set(seats)): #set() removes duplicates in a collection, so the original collection must match the length of the set() collection if walang duplicates, if it dont match, edi invalid
+    if len(seats) != len(set(seats)): #set() returns a collection with removed duplicates, so the original collection must match the length of the set() collection if no duplicates
         return True
     return False
 
-def are_seats_unavailable(seats, chosen_room, chosen_time, tid):
+def are_seats_unavailable(seats, chosen_room, chosen_time, tid): #check if requested seats are available
     global flag_for_multiple_zeros
     if tid:
         for seat in seats:
@@ -154,7 +172,7 @@ def are_seats_unavailable(seats, chosen_room, chosen_time, tid):
                 print("Invalid boi")
                 time.sleep(1)
                 return False
-            if seat not in orders[tid]['Seat(s)'] and seat not in cinema_info[chosen_room]['Showtimes'][chosen_time]['Seats']:
+            if seat not in orders[tid]['Seat(s)'] and seat not in cinema_info[chosen_room]['Showtimes'][chosen_time]['Seats']: # Check if seat is taken by another order (not the current one being updated and not available)
                 return True
     else:
         for seat in seats:
@@ -163,7 +181,7 @@ def are_seats_unavailable(seats, chosen_room, chosen_time, tid):
                 print("Invalid boi")
                 time.sleep(1)
                 return False
-            if seat not in cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"]:
+            if seat not in cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"]: # check if seat is still in the list of seats (booked seats are replaced by a character 'X')
                 return True
         
 def complete_order(chosen_room, chosen_time, seats, tid, marker_for_booked_seats):
@@ -171,7 +189,7 @@ def complete_order(chosen_room, chosen_time, seats, tid, marker_for_booked_seats
     print(f"Title: {cinema_info[chosen_room]['Title']} \nRoom: {chosen_room} \nSchedule: {cinema_info[chosen_room]['Showtimes'][chosen_time]['Time']}")
     print("Seat(s): ", end = " ")
     for i, seat in enumerate(seats):
-        if i < len(seats) - 1:
+        if i < len(seats) - 1: # print last index without comma
             print(f"{seat}, ", end="")
         else:
             print(f"{seat}")
@@ -185,11 +203,11 @@ def complete_order(chosen_room, chosen_time, seats, tid, marker_for_booked_seats
         print("Cancelled.")
     time.sleep(2)
 
-def confirm_order(chosen_room, chosen_time, price, seats, tid, marker_for_booked_seats): #enter TID if updating
-    if tid is not None:
-        mark_seats("", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, False)
+def confirm_order(chosen_room, chosen_time, price, seats, tid, marker_for_booked_seats): # tid is the order ID
+    if tid:
+        mark_seats("", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, False) #revert previously booked seats to original seat numbers
     else:
-        tid = generate_TID()
+        tid = generate_TID() # if no tid, generate a new TID for a new booking
 
     orders[tid] = {
         "Title": cinema_info[chosen_room]["Title"],
@@ -199,7 +217,7 @@ def confirm_order(chosen_room, chosen_time, price, seats, tid, marker_for_booked
         "Price": price,
         "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
-    mark_seats(marker_for_booked_seats, chosen_room, chosen_time, seats, False, True)
+    mark_seats(marker_for_booked_seats, chosen_room, chosen_time, seats, False, True) # mark booked seats
     print("Success! We look forward to seeing you!")
 #-----------------------------------------------------------------------------------
 
@@ -236,12 +254,12 @@ def search_order_panel():
             continue
         else:
             info = orders[search_choice]
-            print(f"{search_choice}: {info}")
+            print(f"Order ID: {search_choice} | Title: {info['Title']} | Room {info['Room Number']} | Schedule: {info['Schedule']} | Seat(s): {info['Seat(s)']} | Price: {info['Price']} | Order Date: {info['Time']}")
             input("Press Enter to continue...")
             return
 
 def update_order_panel():
-    global current_menu_id, exit
+    global current_menu_id, exit # Uses the same global 'exit' variable as other panel functions for menu navigation control
     while True:
         exit = False
         os.system('cls')
