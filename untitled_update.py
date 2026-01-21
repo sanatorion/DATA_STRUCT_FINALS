@@ -2,8 +2,14 @@ import time
 import os
 from datetime import datetime
 import random
+from debug import DebugTools
 
-#SPAGHETTI CODE AYUSIN PA
+current_menu_id = 1 #this menu id is used to determine which panel to show, each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
+
+max_seats = 50 
+orders = {} #ORDER INFO: ORDER ID, MOVIE TITLE, ROOM NUMBER, SCHEDULE, SEAT, PRICE, TIME
+cinema_info = {}
+
 def tryparse(value):
     try:
         return int(value)
@@ -16,19 +22,15 @@ def generate_TID():
         if tid not in orders:
             return tid
 
-def confirm_order(chosen_room, chosen_time, price, seats):
-    tid = generate_TID()
-    orders[tid] = {
-        "Title": cinema_info[chosen_room]["Title"],
-        "Room Number": chosen_room,
-        "Schedule": cinema_info[chosen_room]["Showtimes"][chosen_time]["Time"],
-        "Seat(s)": seats,
-        "Price": price,
-        "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    for seat in seats:
-        cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"][seat-1] = 'X' #replace booked seat by the character X
-    print("Ticket Booked! We look forward to seeing you!")
+def mark_seats(marker, room_num, time, seats_to_mark_from, convert_time, use_marker):
+    if convert_time:
+        showtimes = cinema_info[room_num]["Showtimes"]
+        for key, val in showtimes.items():
+            if val["Time"] == time:
+                time = key
+                break
+    for seat in seats_to_mark_from:
+        cinema_info[room_num]["Showtimes"][time]["Seats"][seat-1] = marker if use_marker else seat
 
 def modify_cinema_room(room_num, movie_name, price, time1, time2, time3): #add or edit any movie details using this function
     cinema_info[room_num] = { 
@@ -60,10 +62,13 @@ def print_all_info(dict, info_to_print): #this just prints whatever info needed 
         n += 1
         print(f"{n}. {info[info_to_print]}")
 
-def select_room_panel(chosen_room):
+#-----------------------------------------------------------
+def select_room_panel(tid):
     global current_menu_id, exit #current_menu_id, nasa Main ito, this is used para makapag traverse ung menu smoothly by detecting anong menu dapat ung lalabas currently
     while True:
         os.system('cls')
+        if tid:
+            print(f"Order ID: {tid} | Room {orders[tid]['Room Number']} | Schedule: {orders[tid]['Schedule']} | Seat(s): {orders[tid]['Seat(s)']} | Price: {orders[tid]['Price']}")
         print("Rooms:")
         print_all_info(cinema_info, "Title")
         chosen_room = tryparse(input("> "))
@@ -75,10 +80,12 @@ def select_room_panel(chosen_room):
         elif chosen_room == 0: exit = True; return #edits the exit boolean variable that allows the menu traversal to work. used in a while loop sa Main
         else: current_menu_id += 1; return chosen_room #increment menu id to go to the next  menu
         
-def select_schedule_panel(chosen_room, chosen_time):
+def select_schedule_panel(chosen_room, tid):
      global current_menu_id
      while True: 
         os.system('cls')
+        if tid:
+            print(f"Order ID: {tid} | Room {orders[tid]['Room Number']} | Schedule: {orders[tid]['Schedule']} | Seat(s): {orders[tid]['Seat(s)']}  | Price: {orders[tid]['Price']}")
         print(f"Room {chosen_room}: {cinema_info[chosen_room]['Title']} > Time:")
         print_all_info(cinema_info[chosen_room]["Showtimes"], "Time")
         chosen_time = tryparse(input("> "))
@@ -91,10 +98,14 @@ def select_schedule_panel(chosen_room, chosen_time):
         else: current_menu_id += 1; return chosen_time #increment menu id to go to the next  menu
 
 flag_for_multiple_zeros = False #just a lazy checker for 00000 inputs, its main condition is in "are_seats_unavailable() (line 151)"" tignan mo comment sa line 104
-def select_seats_panel(chosen_room, chosen_time):
+def select_seats_panel(chosen_room, chosen_time, tid):
     global current_menu_id, flag_for_multiple_zeros
+    if tid:
+        mark_seats("[]", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, True)
     while True:
         os.system('cls')
+        if tid:
+            print(f"Order ID: {tid} | Room {orders[tid]['Room Number']} | Schedule: {orders[tid]['Schedule']} | Seat(s): {orders[tid]['Seat(s)']} | Price: {orders[tid]['Price']}")
         print(f"Room {chosen_room}: {cinema_info[chosen_room]['Title']} > Time: {cinema_info[chosen_room]['Showtimes'][chosen_time]['Time']}")
         display_seats(chosen_room, chosen_time)
         print()
@@ -103,6 +114,8 @@ def select_seats_panel(chosen_room, chosen_time):
 
         if chosen_seat == "0": #ito kasi di naman nadedetect mga 00000 input since comparing to string lang, pero by default python converts multiple zeros to single 0 lang rin pero di ko inallow mag ganon cause of a few input issues
             current_menu_id -= 1 #decrement menu id to go back to previous menu
+            if tid:
+                mark_seats("X", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, True)
             break
         elif are_input_seat_invalid(chosen_seat):
             print("Invalid boi")
@@ -110,28 +123,13 @@ def select_seats_panel(chosen_room, chosen_time):
             continue
         else:
             booked_seats = [int(seat) for seat in chosen_seat.split(",")]
-            if are_seats_unavailable(booked_seats, chosen_room, chosen_time):
+            if are_seats_unavailable(booked_seats, chosen_room, chosen_time, tid):
                 print("Seat already taken.")
                 time.sleep(1)
                 continue
             
         if flag_for_multiple_zeros: continue
-        print("\nConfirm Order: \n---------------")
-        print(f"Title: {cinema_info[chosen_room]['Title']} \nRoom: {chosen_room} \nSchedule: {cinema_info[chosen_room]['Showtimes'][chosen_time]['Time']}")
-        print("Seat(s): ", end = " ")
-        for i, seat in enumerate(booked_seats):
-            if i < len(booked_seats) - 1:
-                print(f"{seat}, ", end="")
-            else:
-                print(f"{seat}")
-        total_price = cinema_info[chosen_room]["Price"] * len(booked_seats)
-        print(f"--------------- \nPrice: {total_price}")
-        confirmation = input("> Enter Y to Confirm: ")
-        if confirmation.capitalize() == "Y":
-            confirm_order(chosen_room, chosen_time, total_price, booked_seats)
-        else:
-            print("Order cancelled.")
-        time.sleep(2)
+        complete_order(chosen_room, chosen_time, booked_seats, tid if tid else None, "[]" if tid else "X")
 
 def are_input_seat_invalid(chosen_seat):
     seats = chosen_seat.split(",") #since we allow booking multiple seats per order, seats is a string muna and yeah split it by comma
@@ -148,16 +146,57 @@ def are_input_seat_invalid(chosen_seat):
         return True
     return False
 
-def are_seats_unavailable(seats, chosen_room, chosen_time):
+def are_seats_unavailable(seats, chosen_room, chosen_time, tid):
     global flag_for_multiple_zeros
-    for seat in seats:
-        if seat < 1: #if seat num input is 0000000, python automatically converts it to a single 0 kaya if less than 1, then flag it
-            flag_for_multiple_zeros = True
-            print("Invalid boi")
-            time.sleep(1)
-            return False
-        if seat not in cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"]:
-            return True
+    if tid:
+        for seat in seats:
+            if seat not in orders[tid]['Seat(s)'] and seat not in cinema_info[chosen_room]['Showtimes'][chosen_time]['Seats']:
+                return True
+    else:
+        for seat in seats:
+            if seat < 1: #if seat num input is 0000000, python automatically converts it to a single 0 kaya if less than 1, then flag it
+                flag_for_multiple_zeros = True
+                print("Invalid boi")
+                time.sleep(1)
+                return False
+            if seat not in cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"]:
+                return True
+        
+def complete_order(chosen_room, chosen_time, seats, tid, marker_for_booked_seats):
+    print("\nConfirm Order: \n---------------")
+    print(f"Title: {cinema_info[chosen_room]['Title']} \nRoom: {chosen_room} \nSchedule: {cinema_info[chosen_room]['Showtimes'][chosen_time]['Time']}")
+    print("Seat(s): ", end = " ")
+    for i, seat in enumerate(seats):
+        if i < len(seats) - 1:
+            print(f"{seat}, ", end="")
+        else:
+            print(f"{seat}")
+    total_price = cinema_info[chosen_room]["Price"] * len(seats)
+    print(f"--------------- \nPrice: {total_price}")
+    confirmation = input("> Enter Y to Confirm: ")
+
+    if confirmation.capitalize() == "Y":
+        confirm_order(chosen_room, chosen_time, total_price, seats, tid, marker_for_booked_seats)
+    else:
+        print("Cancelled.")
+    time.sleep(2)
+
+def confirm_order(chosen_room, chosen_time, price, seats, tid, marker_for_booked_seats): #enter TID if updating
+    if tid is not None:
+        mark_seats("", orders[tid]["Room Number"], orders[tid]["Schedule"], orders[tid]["Seat(s)"], True, False)
+    else:
+        tid = generate_TID()
+
+    orders[tid] = {
+        "Title": cinema_info[chosen_room]["Title"],
+        "Room Number": chosen_room,
+        "Schedule": cinema_info[chosen_room]["Showtimes"][chosen_time]["Time"],
+        "Seat(s)": seats,
+        "Price": price,
+        "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    mark_seats(marker_for_booked_seats, chosen_room, chosen_time, seats, False, True)
+    print("Success! We look forward to seeing you!")
 
 def manage_orders_panel():
     global exit
@@ -171,15 +210,7 @@ def manage_orders_panel():
             time.sleep(1)
             continue
         else:
-            match(manage_choice):
-                case 1:
-                    search_order_panel()
-                case 2:
-                    update_order_panel()
-                case 3:
-                    cancel_order_panel()
-                case 4:
-                    view_all_orders_panel()
+            return manage_choice
 
 def search_order_panel():
     global current_menu_id, exit
@@ -190,10 +221,9 @@ def search_order_panel():
             time.sleep(2)
             return
         print("Orders:")
-        for key in orders.keys():
-            print(f"{key}")
-        print()
-        search_choice = tryparse(input("> Enter TID to search: "))
+        for tid in orders.keys():
+            print(tid)
+        search_choice = tryparse(input("\n> Enter TID to search: "))
         if search_choice == 0: exit = True; return
         elif search_choice is None or search_choice not in orders:
             print("Invalid boi")
@@ -205,103 +235,30 @@ def search_order_panel():
             input("Press Enter to continue...")
             return
 
-
 def update_order_panel():
+    global current_menu_id, exit
     while True:
         os.system('cls')
         if not orders:
             print("No orders found.")
             time.sleep(2)
             return
-        for key, val in orders.items():
-            print(f"{key}: {val}")
-        print()
-        update_choice = tryparse(input("> Enter TID to update: "))
-        if update_choice == 0: return
-        elif update_choice is None or update_choice not in orders:
+        display_all_orders(orders)
+        tid = tryparse(input("\n> Enter TID to update: "))
+        if tid == 0: return
+        elif tid is None or tid not in orders:
             print("Invalid boi")
             time.sleep(1)
             continue
         else:
-            update_order(update_choice)
-        
-def update_order(tid):
-    while True:
-        info = orders[tid]
-        os.system('cls')
-        print("Current Order Info:")
-        print(f"{tid}: {info}")
-        print_all_info(cinema_info, "Title")
-        newmovie = tryparse(input("Enter new Movie  (enter any other input except 0 to keep current): "))
-        if newmovie == 0:
-            return
-        elif newmovie is None or newmovie > len(cinema_info) or newmovie < 1:
-            newmovie = info['Room Number']
-        print()
-        print_all_info(cinema_info[newmovie]["Showtimes"], "Time")
-        newschedule = tryparse(input("Enter new Schedule Number (enter any other input except 0 to keep current): "))
-        if newschedule == 0:
-            return
-        elif newschedule is None or newschedule > len(cinema_info[newmovie]["Showtimes"]) or newschedule < 1:
-            if info['Schedule'] == cinema_info[newmovie]["Showtimes"][1]["Time"]:
-                newschedule = 1
-            elif info['Schedule'] == cinema_info[newmovie]["Showtimes"][2]["Time"]:
-                newschedule = 2
-            else:
-                newschedule = 3
-        print()
-        display_seats(newmovie, newschedule)
-        newseatnumber = input("Enter new Seat(s) (separated by comma) (enter any other input except 0 to keep current): ")
-        if tryparse(newseatnumber) == 0:
-            return
-        booked_seats = [int(seat) for seat in newseatnumber.split(",")]
-        cont = 0
-        for seat in booked_seats:
-            if seat not in cinema_info[newmovie]["Showtimes"][newschedule]["Seats"]:
-                print("Seat already taken or invalid.")
-                time.sleep(2)
-                cont = 1
-                break
-        if cont == 1:
-            continue
-        print("\nConfirm Update: \n---------------")
-        print(f"Title: {cinema_info[newmovie]['Title']} \nRoom: {newmovie} \nSchedule: {cinema_info[newmovie]['Showtimes'][newschedule]['Time']}")
-        print("Seat(s): ", end = " ")
-        for i, seat in enumerate(booked_seats):
-            if i < len(booked_seats) - 1:
-                print(f"{seat}, ", end="")
-            else:
-                print(f"{seat}")
-        total_price = cinema_info[newmovie]["Price"] * len(booked_seats)
-        print(f"--------------- \nPrice: {total_price}")
-        confirmation = input("> Enter Y to Confirm: ")
-        if confirmation.capitalize() == "Y":
-            confirm_update_order(tid, newmovie, newschedule, total_price, booked_seats)
-        else:
-            print("Update cancelled.")
-        time.sleep(2)
-
-def confirm_update_order(tid, chosen_room, chosen_time, price, seats):
-    info = orders[tid]
-    if info['Schedule'] == cinema_info[info['Room Number']]["Showtimes"][1]["Time"]:
-        previous_time = 1
-    elif info['Schedule'] == cinema_info['Room Number']["Showtimes"][2]["Time"]:
-        previous_time = 2
-    else:
-        previous_time = 3
-    for seat in info["Seat(s)"]:
-        cinema_info[info['Room Number']]["Showtimes"][previous_time]["Seats"][seat-1] = seat #revert previously booked seats back to original seat number
-    orders[tid] = {
-        "Title": cinema_info[chosen_room]["Title"],
-        "Room Number": chosen_room,
-        "Schedule": cinema_info[chosen_room]["Showtimes"][chosen_time]["Time"],
-        "Seat(s)": seats,
-        "Price": price,
-        "Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    }
-    for seat in seats:
-        cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"][seat-1] = 'X' #replace booked seat by the character X
-    print("Ticket Updated! We look forward to seeing you!")
+            new_room = 0; new_time = 0
+            exit = False; current_menu_id = 1
+            while not exit:
+                os.system('cls')
+                match(current_menu_id):
+                    case 1: new_room = select_room_panel(tid)
+                    case 2: new_time = select_schedule_panel(new_room, tid)
+                    case 3: select_seats_panel(new_room, new_time, tid)
 
 def cancel_order_panel():
     while True:
@@ -310,10 +267,8 @@ def cancel_order_panel():
             print("No orders found.")
             time.sleep(2)
             return
-        for key, val in orders.items():
-            print(f"{key}: {val}")
-        print()
-        cancel_choice = tryparse(input("> Enter TID to cancel: "))
+        display_all_orders(orders)
+        cancel_choice = tryparse(input("\n> Enter TID to cancel: "))
         if cancel_choice == 0: return
         elif cancel_choice is None or cancel_choice not in orders:
             print("Invalid boi")
@@ -323,24 +278,12 @@ def cancel_order_panel():
         print("Are you sure you want to cancel this order?")
         confirmation = input("> Enter Y to Confirm: ")
         if confirmation.capitalize() == "Y":
-            info = orders[cancel_choice]
-            if info['Schedule'] == cinema_info[info['Room Number']]["Showtimes"][1]["Time"]:
-                previous_time = 1
-            elif info['Schedule'] == cinema_info['Room Number']["Showtimes"][2]["Time"]:
-                previous_time = 2
-            else:
-                previous_time = 3
-            
-            for seat in info["Seat(s)"]:
-                cinema_info[info['Room Number']]["Showtimes"][previous_time]["Seats"][seat-1] = seat
-            
+            mark_seats("", orders[cancel_choice]["Room Number"], orders[cancel_choice]["Schedule"], orders[cancel_choice]["Seat(s)"], True, False)
             del orders[cancel_choice]
             print("Order Cancelled.")
-            time.sleep(2)
         else:
             print("Cancellation aborted.")
-            time.sleep(2)
-
+        time.sleep(2)
 def view_all_orders_panel():
     while True:
         os.system('cls')
@@ -348,10 +291,10 @@ def view_all_orders_panel():
             print("No orders found.")
             time.sleep(2)
             return
-        print("Sort Orders by:\n1. Room Number\n2. Schedule\n3. Price\n4. Order Date (Oldest to Newest)\n5. Order Date (Newest to Oldest)")
+        print("Sort Orders by:\n1. Room Number\n2. Schedule\n3. Price\n4. Order Date")
         sort_choice = tryparse(input("> "))
         if sort_choice == 0: return
-        elif sort_choice is None or sort_choice > 5 or sort_choice < 1:
+        elif sort_choice is None or sort_choice > 4 or sort_choice < 1:
             print("Invalid boi")
             time.sleep(1)
             continue
@@ -365,31 +308,34 @@ def view_all_orders_panel():
                     sorted_orders = dict(sorted(orders.items(), key=lambda item: item[1]['Price']))
                 case 4:
                     sorted_orders = dict(sorted(orders.items(), key=lambda item: datetime.strptime(item[1]['Time'], "%Y-%m-%d %H:%M:%S")))
-                case 5:
-                    sorted_orders = dict(sorted(orders.items(), key=lambda item: datetime.strptime(item[1]['Time'], "%Y-%m-%d %H:%M:%S"), reverse=True))
-        
-            os.system('cls')
-            print("Orders:")
-            for tid, info in sorted_orders.items():
-                print(f"Order ID: {tid}, Movie Number: {info['Room Number']}, Seat(s): {info['Seat(s)']}, Price: {info['Price']}, Order Date: {info['Time']}")
-            input("Press Enter to continue...")
+                
+            while True:
+                os.system('cls')
+                print("Orders:")
+                display_all_orders(sorted_orders)
+                choice = input("\nEnter R to reverse the list, else any key to exit...")
+                if choice.capitalize() == "R":
+                    sorted_orders = dict(reversed(sorted_orders.items()))
+                else:
+                    break
+
+def display_all_orders(order_collection):
+    for tid, info in order_collection.items():
+        print(f"Order ID: {tid} | Title: {info['Title']} | Room {info['Room Number']} | Schedule: {info['Schedule']} | Seat(s): {info['Seat(s)']} | Price: {info['Price']} | Order Date: {info['Time']}")
+
 
 #main----------------------------------------------------------------------
-#ORDER INFO: MOVIE TITLE, ROOM NUMBER, SCHEDULE, SEAT, PRICE, TIME
-max_seats = 50
-orders = {}
-cinema_info = {}
-
 modify_cinema_room(1, "Movie 1", 150, "1:00", "2:00", "3:00")
 modify_cinema_room(2, "Movie 2", 250, "4:00", "5:00", "6:00")
 modify_cinema_room(3, "Movie 3", 350, "7:00", "8:00", "9:00")
 
+generator = DebugTools(cinema_info, orders)
+generator.generate_random_orders(4)
+
 while True:
     os.system('cls')
     #print all orders for debugging lang, remove rin to pag tapos na
-    for key, val in orders.items():
-        print(f"{key}: {val}")
-    print()
+    display_all_orders(orders)
 
     print("WELCOME TO MOVIE TICKET RESERVATION SYSTEM")
     print("(Enter 0 anytime to return to the previous menu)")
@@ -401,23 +347,29 @@ while True:
         time.sleep(1)
         continue
     else:
+        exit = False
         match(user_input):
             case 1:
                 room_num = 0
                 time_id = 0
-                exit = False
-                current_menu_id = 1 #this menu id is used to determine which panel to show, each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
-                while not exit:
-                    match(current_menu_id):
-                        case 1: room_num = select_room_panel(room_num)
-                        case 2: time_id = select_schedule_panel(room_num, time_id)
-                        case 3: select_seats_panel(room_num, time_id)
-            case 2:
-                exit = False
                 current_menu_id = 1
                 while not exit:
-                    manage_orders_panel()
-                    
+                    match(current_menu_id):
+                        case 1: room_num = select_room_panel(None)
+                        case 2: time_id = select_schedule_panel(room_num, None)
+                        case 3: select_seats_panel(room_num, time_id, None)
+            case 2:
+                while not exit:
+                    choice = manage_orders_panel()
+                    match(choice):
+                        case 1:
+                            search_order_panel()
+                        case 2:
+                            update_order_panel()
+                        case 3:
+                            cancel_order_panel()
+                        case 4:
+                            view_all_orders_panel()
             case 3:
                 break
 input() #wala lang to, i run using cmd, nilagyan ko lang para di magclose agad ung cmd
