@@ -114,7 +114,7 @@ def select_schedule_panel(chosen_room, tid):
         elif chosen_time == 0: current_menu_id -= 1; break #decrement menu id to go back to previous menu
         else: current_menu_id += 1; return chosen_time #increment menu id to go to the next  menu
 
-flag_for_multiple_zeros = False #just a lazy checker for multiple zero inputs (e.g. 0000000), its main condition is in are_seats_unavailable() (line 148). Read comment on line 114 for further info
+flag_for_multiple_zeros = False #just a lazy checker for multiple zero inputs (e.g. 0000000), its main condition is in are_seats_unavailable() (line 166). Read comment on line 132 for further info
 def select_seats_panel(chosen_room, chosen_time, tid): # tid parameter is used to indicate if updating an existing order (tid is the order ID) or creating a new booking (tid is None)
     global current_menu_id, flag_for_multiple_zeros
     if tid:
