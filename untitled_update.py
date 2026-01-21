@@ -5,7 +5,7 @@ import random
 from debug import DebugTools
 
 # Movie Ticket Reservation System - Code Structure Overview:
-# 
+
 # Data Structures:
 # - cinema_info: Dict of rooms (room_num -> {'Title': str, 'Price': int, 'Showtimes': {time_id: {'Time': str, 'Seats': list}}})
 # - orders: Dict of TIDs (transaction IDs) to order details ({'Title', 'Room Number', 'Schedule', 'Seat(s)', 'Price', 'Time'})
@@ -40,7 +40,7 @@ def generate_TID():
             return tid
 
 def mark_seats(marker, room_num, time, seats_to_mark_from, convert_time, use_marker): #seat marker
-    if convert_time: #matches proper time id of schedules of existing orders. This is used if updating existing order
+    if convert_time: # Converts schedule string (stored in orders) to numeric time ID (used in showtimes) when updating an existing order.
         showtimes = cinema_info[room_num]["Showtimes"]
         for key, val in showtimes.items():
             if val["Time"] == time:
