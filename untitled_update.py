@@ -61,7 +61,7 @@ def print_all_info(dict, info_to_print): #this just prints whatever info needed 
         n += 1
         print(f"{n}. {info[info_to_print]}")
 
-#-----------------------------------------------------------
+#-----------------------------------------------------------------------------------
 def select_room_panel(tid):
     global current_menu_id, exit #current_menu_id, nasa Main ito, this is used para makapag traverse ung menu smoothly by detecting anong menu dapat ung lalabas currently
     while True:
@@ -201,6 +201,7 @@ def confirm_order(chosen_room, chosen_time, price, seats, tid, marker_for_booked
     }
     mark_seats(marker_for_booked_seats, chosen_room, chosen_time, seats, False, True)
     print("Success! We look forward to seeing you!")
+#-----------------------------------------------------------------------------------
 
 def manage_orders_panel():
     global exit
@@ -289,6 +290,7 @@ def cancel_order_panel():
         else:
             print("Cancellation aborted.")
         time.sleep(2)
+
 def view_all_orders_panel():
     while True:
         os.system('cls')
@@ -327,7 +329,6 @@ def view_all_orders_panel():
 def display_all_orders(order_collection):
     for tid, info in order_collection.items():
         print(f"Order ID: {tid} | Title: {info['Title']} | Room {info['Room Number']} | Schedule: {info['Schedule']} | Seat(s): {info['Seat(s)']} | Price: {info['Price']} | Order Date: {info['Time']}")
-
 
 #main----------------------------------------------------------------------
 modify_cinema_room(1, "Movie 1", 150, "1:00", "2:00", "3:00")
