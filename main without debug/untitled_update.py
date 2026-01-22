@@ -221,10 +221,11 @@ def search_order_panel():
             return
         print("1. Search by TID\n2. Search by Keyword")
         choice = tryparse(input("> "))
+        if choice == 0: return
         if not choice or (choice < 0 or choice > 2): 
             display_invalid_message()
             continue
-        if choice == 0: return
+        
         match(choice):
             case 1: search_id_panel()
             case 2: search_keyword_panel()
