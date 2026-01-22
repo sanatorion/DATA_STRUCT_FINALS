@@ -346,17 +346,20 @@ modify_cinema_room(3, "Movie 3", 350, "7:00", "8:00", "9:00")
 generator = DebugTools(cinema_info, orders)
 generator.generate_random_orders(4)
 
+show_orders = False
 while True:
     os.system('cls')
-    #print all orders for debugging lang, remove rin to pag tapos na
-    display_all_orders(orders)
-
+    if show_orders: display_all_orders(orders)
     print("WELCOME TO MOVIE TICKET RESERVATION SYSTEM")
     print("(Enter 0 anytime to return to the previous menu)")
     print("\n1. Book Movie Ticket \n2. Manage Orders(Wala pa) \n3. Exit")
-
+    print(f"4. {'Hide' if show_orders else 'Show'} all orders")
     user_input = tryparse(input("> "))
-    if user_input is None or user_input > 3:
+
+    if user_input == 4:
+        show_orders = not show_orders
+
+    if user_input is None or user_input > 4:
         display_invalid_message()
         continue
     else:
