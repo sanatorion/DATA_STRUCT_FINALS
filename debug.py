@@ -47,7 +47,7 @@ class DebugTools:
             tid = self.generate_TID()
             self.orders[tid] = {
                 "Title": self.cinema_info[chosen_room]["Title"],
-                "Room Number": chosen_room,
+                "Room": chosen_room,
                 "Schedule": self.cinema_info[chosen_room]["Showtimes"][chosen_time]["Time"],
                 "Seat(s)": chosen_seats,
                 "Price": price,
@@ -98,7 +98,7 @@ class DebugTools:
             
         orders[tid] = {
             "Title": cinema_info[chosen_room]["Title"],
-            "Room Number": chosen_room,
+            "Room": chosen_room,
             "Schedule": cinema_info[chosen_room]["Showtimes"][chosen_time]["Time"],
             "Seat(s)": chosen_seats,
             "Price": price,
