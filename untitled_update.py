@@ -8,10 +8,19 @@ current_menu_id = 1 #used to simulate menu traversal. each panels modifies its v
 max_seats = 50 #total number of seats
 orders = {} #ORDER INFO: ORDER ID, MOVIE TITLE, ROOM NUMBER, SCHEDULE, SEAT, PRICE, TIME
 cinema_info = {} #stores cinema data here
+orders_in_strings = {}
 
 def display_invalid_message():
     print("Invalid"); time.sleep(1)
-    
+
+def build_string_reference():
+    global orders_in_strings # update string references
+    for tid, val in orders.items(): 
+            orders_in_strings[tid] = ""
+            for category, val2 in val.items():
+                val2 = str(val2).replace("[", "").replace("]", "").replace(" ", "")
+                orders_in_strings[tid] += (category + val2)
+
 def tryparse(value):
     try:
         return int(value)
@@ -41,6 +50,7 @@ def are_seats_unavailable(seats, chosen_room, chosen_time, tid): #check if reque
         else:
             if seat not in cinema_info[chosen_room]["Showtimes"][chosen_time]["Seats"]: # check if seat is still in the list of seats (booked seats are replaced by a character 'X')
                 return True
+    return False
 
 def generate_TID():
     while True:
@@ -189,7 +199,6 @@ def confirm_order(chosen_room, chosen_time, price, seats, tid, marker_for_booked
     }
     mark_seats(marker_for_booked_seats, chosen_room, chosen_time, seats, False, True) # mark booked seats
     print("Seat(s) Booked.")
-
 #-----------------------------------------------------------------------------------
 def manage_orders_panel():
     global exit
@@ -213,7 +222,7 @@ def search_order_panel():
             return
         print("1. Search by TID\n2. Search by Keyword")
         choice = tryparse(input("> "))
-        if choice < 0 or choice > 2:
+        if not choice or (choice < 0 or choice > 2): 
             display_invalid_message()
             continue
         if choice == 0: return
@@ -229,7 +238,6 @@ def search_id_panel():
             print(tid)
         search_choice = tryparse(input("\n> Enter TID to search: "))
         if search_choice == 0: return
-
         elif search_choice is None or search_choice not in orders:
             display_invalid_message()
             continue
@@ -240,24 +248,19 @@ def search_id_panel():
             return
         
 def search_keyword_panel():
+    build_string_reference()
     while True:
         os.system('cls')
-        search = input("> Search: ").replace(" ", "")
+        search = input("> Search: ")
         if search == "0": return
         if not search: display_invalid_message(); continue
         print()
-        orders_in_strings = {}
-        for tid, val in orders.items():
-            orders_in_strings[tid] = ""
-            for category, val2 in val.items():
-                val2 = str(val2).replace("[", "").replace("]", "").replace(" ", "")
-                orders_in_strings[tid] += (category + val2)
-        
-        matches = [tid for tid in orders_in_strings.keys() if search.lower() in orders_in_strings[tid].lower()]
+        matches = [tid for tid in orders_in_strings.keys() if search.replace(" ", "").lower() in orders_in_strings[tid].lower()]
         if not matches:
-            print(f"{search} not found.")
-        for match in matches:
-            print(f"Order ID: {match} | Title: {orders[match]['Title']} | Room {orders[match]['Room']} | Schedule: {orders[match]['Schedule']} | Seat(s): {orders[match]['Seat(s)']} | Price: {orders[match]['Price']} | Order Date: {orders[match]['Time']}")
+            print(f"'{search}' not found."); 
+        else:
+            for match in matches:
+                print(f"Order ID: {match} | Title: {orders[match]['Title']} | Room {orders[match]['Room']} | Schedule: {orders[match]['Schedule']} | Seat(s): {orders[match]['Seat(s)']} | Price: {orders[match]['Price']} | Order Date: {orders[match]['Time']}")
         input("\nPress Enter to continue...")
 
 def update_order_panel():
@@ -316,7 +319,7 @@ def view_all_orders_panel():
             print("No orders found.")
             time.sleep(2)
             return
-        print("Sort Orders by:\n1. Room Number\n2. Schedule\n3. Price\n4. Order Date")
+        print("Sort Orders by:\n1. Room\n2. Schedule\n3. Price\n4. Order Date")
         sort_choice = tryparse(input("> "))
         if sort_choice == 0: return
         elif sort_choice is None or sort_choice > 4 or sort_choice < 1:
@@ -352,7 +355,7 @@ while True:
     if show_orders: display_all_orders(orders)
     print("WELCOME TO MOVIE TICKET RESERVATION SYSTEM")
     print("(Enter 0 anytime to return to the previous menu)")
-    print("\n1. Book Movie Ticket \n2. Manage Orders(Wala pa) \n3. Exit")
+    print("\n1. Book Movie Ticket \n2. Manage Orders \n3. Exit")
     print(f"4. {'Hide' if show_orders else 'Show'} all orders")
     user_input = tryparse(input("> "))
 
@@ -382,6 +385,7 @@ while True:
                         case 2: update_order_panel()
                         case 3: cancel_order_panel()
                         case 4: view_all_orders_panel()
+
             case 3:
                 break
 input() #wala lang to, i run using cmd, nilagyan ko lang para di magclose agad ung cmd
