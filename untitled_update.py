@@ -54,7 +54,7 @@ def are_seats_unavailable(seats, chosen_room, chosen_time, tid): #check if reque
 
 def generate_TID():
     while True:
-        tid = random.randint(1000, 9999)
+        tid = random.randint(1000, 10000)
         if tid not in orders:
             return tid
 
