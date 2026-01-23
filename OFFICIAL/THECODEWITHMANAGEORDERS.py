@@ -116,7 +116,6 @@ def modify_value_panel(value_to_change, use_time_only, chosen_room):
                         return value_to_change
             return new_val
 
-
 def display_seats(room_num, time_id): #displays seats
     movie_and_time = cinema_info[room_num]["Showtimes"][time_id]["Seats"]
     print("┌──────────────────────────────────────────────────┐")
