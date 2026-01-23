@@ -2,7 +2,6 @@ import time
 import os
 from datetime import datetime
 import random
-from debug import DebugTools
 
 current_menu_id = 1 #used to simulate menu traversal. each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
 max_seats = 50 #total number of seats
@@ -26,6 +25,13 @@ def tryparse(value):
         return int(value)
     except ValueError:
         return None
+
+def is_input_time(value):
+    try:
+        datetime.strptime(value, "%H:%M")
+        return True
+    except ValueError:
+        return False
 
 def are_input_seat_invalid(chosen_seat):
     seats = chosen_seat.split(",") # since we allow booking multiple seats per order, seats is a string and is split by comma
@@ -79,6 +85,38 @@ def modify_cinema_room(room_num, movie_name, price, time1, time2, time3): #add o
         }
     }
 
+def modify_title_or_showtimes_panel(chosen_room):
+    global current_menu_id
+    os.system('cls')
+    print(f"Room {chosen_room}: {cinema_info[chosen_room]['Title']}\n1. Modify Room Title\n2. Manage Showtimes")
+    choice = tryparse(input("> "))
+    if choice == 0: current_menu_id -= 1
+    elif not choice or (choice > 2 or choice < 0):
+        display_invalid_message()
+    elif choice == 1: current_menu_id += 1
+    elif choice == 2: current_menu_id += 2
+
+def modify_value_panel(value_to_change, use_time_only, chosen_room):
+    global current_menu_id
+    while True:
+        os.system('cls')
+        print(f"Current: {value_to_change}")
+        new_val = input("> Enter new: ")
+        if new_val == "0": current_menu_id -= 1; return value_to_change
+
+        if use_time_only and not is_input_time(new_val): display_invalid_message()
+        elif new_val.replace(" ", "") == "": display_invalid_message() 
+        else: 
+            if use_time_only: 
+                showtimes = cinema_info[chosen_room]["Showtimes"]
+                for _, val in showtimes.items():
+                    if val["Time"] == new_val:
+                        print("Schedule already occupied.")
+                        time.sleep(1)
+                        return value_to_change
+            return new_val
+
+
 def display_seats(room_num, time_id): #displays seats
     movie_and_time = cinema_info[room_num]["Showtimes"][time_id]["Seats"]
     print("┌──────────────────────────────────────────────────┐")
@@ -119,7 +157,7 @@ def select_room_panel(tid):
         elif chosen_room == 0: exit = True; return #edits the exit boolean variable that also allows the menu traversal to work. used in a while loop sa Main
         else: current_menu_id += 1; return chosen_room #increment menu id to go to the next menu
         
-def select_schedule_panel(chosen_room, tid):
+def select_schedule_panel(chosen_room, tid, return_decrement):
      global current_menu_id
      while True: 
         os.system('cls')
@@ -132,7 +170,7 @@ def select_schedule_panel(chosen_room, tid):
         if chosen_time is None or chosen_time > len(cinema_info[chosen_room]["Showtimes"]) or chosen_time < 0:
             display_invalid_message()
             continue
-        elif chosen_time == 0: current_menu_id -= 1; break #decrement menu id to go back to previous menu
+        elif chosen_time == 0: current_menu_id -= return_decrement; break #decrement menu id to go back to previous menu
         else: current_menu_id += 1; return chosen_time #increment menu id to go to the next  menu
 
 def select_seats_panel(chosen_room, chosen_time, tid): # tid parameter is used to indicate if updating an existing order (tid is the order ID) or creating a new booking (tid is None)
@@ -285,7 +323,7 @@ def update_order_panel():
                 os.system('cls')
                 match(current_menu_id):
                     case 1: new_room = select_room_panel(tid)
-                    case 2: new_time = select_schedule_panel(new_room, tid)
+                    case 2: new_time = select_schedule_panel(new_room, tid, 1)
                     case 3: select_seats_panel(new_room, new_time, tid)
 
 def cancel_order_panel():
@@ -346,23 +384,14 @@ modify_cinema_room(1, "The Loved One", 300, "10:00", "13:00", "16:00")
 modify_cinema_room(2, "Call Me Mother", 350, "11:00", "14:00", "17:00")
 modify_cinema_room(3, "John Weak", 750, "12:00", "15:00", "18:00")
 
-generator = DebugTools(cinema_info, orders)
-generator.generate_random_orders(4)
-
-show_orders = False
 while True:
     os.system('cls')
-    if show_orders: display_all_orders(orders)
     print("WELCOME TO MOVIE TICKET RESERVATION SYSTEM")
     print("(Enter 0 anytime to return to the previous menu)")
-    print("\n1. Book Movie Ticket \n2. Manage Orders \n3. Exit")
-    print(f"4. {'Hide' if show_orders else 'Show'} all orders")
+    print("\n1. Book Movie Ticket \n2. Manage Orders \n3. Manage Rooms\n4. Exit")
     user_input = tryparse(input("> "))
 
-    if user_input == 4:
-        show_orders = not show_orders
-
-    if user_input is None or user_input > 4:
+    if user_input is None or user_input > 5:
         display_invalid_message()
         continue
     else:
@@ -375,7 +404,7 @@ while True:
                 while not exit:
                     match(current_menu_id):
                         case 1: room_num = select_room_panel(None)
-                        case 2: time_id = select_schedule_panel(room_num, None)
+                        case 2: time_id = select_schedule_panel(room_num, None, 1)
                         case 3: select_seats_panel(room_num, time_id, None)
             case 2:
                 while not exit:
@@ -387,5 +416,12 @@ while True:
                         case 4: view_all_orders_panel()
 
             case 3:
+                while not exit:
+                    match(current_menu_id):
+                        case 1: chosen_room = select_room_panel(None)
+                        case 2: modify_title_or_showtimes_panel(chosen_room)
+                        case 3: cinema_info[chosen_room]["Title"] = modify_value_panel(cinema_info[chosen_room]["Title"], False, None)
+                        case 4: chosen_time = select_schedule_panel(chosen_room, None, 2)
+                        case 5: cinema_info[chosen_room]["Showtimes"][chosen_time]["Time"] = modify_value_panel(cinema_info[chosen_room]["Showtimes"][chosen_time]["Time"], True, chosen_room)
+            case 4:
                 break
-input() #wala lang to, i run using cmd, nilagyan ko lang para di magclose agad ung cmd

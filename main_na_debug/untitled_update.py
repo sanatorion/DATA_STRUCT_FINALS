@@ -2,7 +2,6 @@ import time
 import os
 from datetime import datetime
 import random
-from debug import DebugTools
 
 current_menu_id = 1 #used to simulate menu traversal. each panels modifies its value to show the correct menu order. so every loop, its value changes, which changes the menu shown as well
 max_seats = 50 #total number of seats
@@ -226,6 +225,7 @@ def search_order_panel():
         if not choice or (choice < 0 or choice > 2): 
             display_invalid_message()
             continue
+        
         match(choice):
             case 1: search_id_panel()
             case 2: search_keyword_panel()
@@ -342,12 +342,9 @@ def view_all_orders_panel():
                     break
 
 #main----------------------------------------------------------------------
-modify_cinema_room(1, "The Loved One", 300, "10:00", "13:00", "16:00")
-modify_cinema_room(2, "Call Me Mother", 350, "11:00", "14:00", "17:00")
-modify_cinema_room(3, "John Weak", 750, "12:00", "15:00", "18:00")
-
-generator = DebugTools(cinema_info, orders)
-generator.generate_random_orders(4)
+modify_cinema_room(1, "Movie 1", 150, "1:00", "2:00", "3:00")
+modify_cinema_room(2, "Movie 2", 250, "4:00", "5:00", "6:00")
+modify_cinema_room(3, "Movie 3", 350, "7:00", "8:00", "9:00")
 
 show_orders = False
 while True:
@@ -356,13 +353,9 @@ while True:
     print("WELCOME TO MOVIE TICKET RESERVATION SYSTEM")
     print("(Enter 0 anytime to return to the previous menu)")
     print("\n1. Book Movie Ticket \n2. Manage Orders \n3. Exit")
-    print(f"4. {'Hide' if show_orders else 'Show'} all orders")
-    user_input = tryparse(input("> "))
-
-    if user_input == 4:
-        show_orders = not show_orders
-
-    if user_input is None or user_input > 4:
+    user_input = tryparse(input("> ")) 
+    
+    if user_input is None or user_input > 3:
         display_invalid_message()
         continue
     else:
@@ -388,4 +381,3 @@ while True:
 
             case 3:
                 break
-input() #wala lang to, i run using cmd, nilagyan ko lang para di magclose agad ung cmd

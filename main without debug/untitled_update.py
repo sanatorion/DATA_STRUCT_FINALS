@@ -342,9 +342,9 @@ def view_all_orders_panel():
                     break
 
 #main----------------------------------------------------------------------
-modify_cinema_room(1, "Movie 1", 150, "1:00", "2:00", "3:00")
-modify_cinema_room(2, "Movie 2", 250, "4:00", "5:00", "6:00")
-modify_cinema_room(3, "Movie 3", 350, "7:00", "8:00", "9:00")
+modify_cinema_room(1, "The Loved One", 300, "10:00", "13:00", "16:00")
+modify_cinema_room(2, "Call Me Mother", 350, "11:00", "14:00", "17:00")
+modify_cinema_room(3, "John Weak", 750, "12:00", "15:00", "18:00")
 
 show_orders = False
 while True:
